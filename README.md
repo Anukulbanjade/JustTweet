@@ -6,7 +6,7 @@ JustTweet is a simple Twitter-like web application built with React and styled w
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/your_username/JustTweet.git
+    git clone https://github.com/anukulbanjade/JustTweet.git
     ```
 
 2. **Install dependencies:**
