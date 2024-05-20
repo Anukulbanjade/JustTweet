@@ -1,14 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+
 const app = express();
 const port = 5000;
 
 // MongoDB connection
-mongoose.connect('*add URL of MongoDB**', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect('*ADD CONNECTION STRING HERE*', {});
 
 const connection = mongoose.connection;
 connection.once('open', () => {
@@ -62,5 +60,5 @@ app.delete('/tweets/:id', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
+  console.log(`Backend server is Running ,You may Start the Frontend Server now `);
 });

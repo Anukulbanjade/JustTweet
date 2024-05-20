@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
-import { FaTwitter, FaPaperPlane, FaUserCircle, FaTrashAlt, FaRegCommentDots } from 'react-icons/fa';
+import { ChakraProvider, Box, Container, Heading, Text, Textarea, Button, Flex, Spacer, IconButton, useToast } from '@chakra-ui/react';
+import { FaTwitter, FaPaperPlane, FaUserCircle, FaTrashAlt } from 'react-icons/fa';
 
 const App = () => {
   const [tweets, setTweets] = useState([]);
   const [newTweet, setNewTweet] = useState('');
   const [tweetCounter, setTweetCounter] = useState(0);
+  const toast = useToast();
 
   const mongodb_url = 'http://localhost:5000';
 
@@ -39,14 +39,32 @@ const App = () => {
   const handleTweetSubmit = async (e) => {
     e.preventDefault();
     if (newTweet.trim() === '') {
+      toast({
+        title: "Tweet content is empty",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
     try {
       await axios.post(`${mongodb_url}/tweets`, { content: newTweet });
       setNewTweet('');
       fetchTweets();
+      toast({
+        title: "Tweet posted successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Error creating tweet:', error);
+      toast({
+        title: "Failed to post tweet",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -54,55 +72,70 @@ const App = () => {
     try {
       await axios.delete(`${mongodb_url}/tweets/${id}`);
       fetchTweets();
+      toast({
+        title: "Tweet deleted successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Error deleting tweet:', error);
+      toast({
+        title: "Failed to delete tweet",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <div className="app-container">
-      <div className="app-header">
-        <FaTwitter className="app-logo" />
-        <h1>JustTweet</h1>
-        <div className="tweet-counter-container">
-          <div className="tweet-counter-bg"></div>
-          <div className="tweet-counter" style={{ width: `${tweetCounter * 10}%` }}>
-            <FaRegCommentDots className="tweet-counter-icon" />
-            <span>{tweetCounter}</span>
-          </div>
-        </div>
-      </div>
-      <div className="tweet-form-container">
-        <form onSubmit={handleTweetSubmit} className="tweet-form">
-          <textarea
-            className="form-control tweet-input"
-            placeholder="What's happening?"
-            value={newTweet}
-            onChange={handleTweetChange}
-            rows="3"
-          ></textarea>
-          <button type="submit" className="btn btn-primary tweet-button">
-            <FaPaperPlane className="tweet-icon" /> Tweet
-          </button>
-        </form>
-      </div>
-      <div className="tweet-list">
-        {tweets.map((tweet, index) => (
-          <div key={tweet._id} className={`tweet-card animated bounceIn${index}`} style={{ animationDelay: `${index * 0.1}s` }}>
-            <div className="tweet-header">
-              <FaUserCircle className="profile-icon" />
-            </div>
-            <p className="tweet-content">{tweet.content}</p>
-            <button
-              className="btn btn-danger btn-sm delete-button"
-              onClick={() => handleTweetDelete(tweet._id)}
+    <ChakraProvider>
+      <Box bg="gray.100" minHeight="100vh">
+        <Container maxW="xl" py="8">
+          <Box bg="white" p="6" borderRadius="lg" boxShadow="lg">
+            <Flex align="center" mb="4">
+              <FaTwitter color="blue.500" fontSize="3xl" />
+              <Heading as="h1" size="lg" ml="2">JustTweet</Heading>
+              <Spacer />
+              <Box>
+                <Text fontWeight="bold">Tweets: {tweetCounter}</Text>
+              </Box>
+            </Flex>
+            <Textarea
+              placeholder="What's happening?"
+              value={newTweet}
+              onChange={handleTweetChange}
+              rows="3"
+              mb="4"
+            />
+            <Button
+              colorScheme="blue"
+              leftIcon={<FaPaperPlane />}
+              onClick={handleTweetSubmit}
+              mb="4"
             >
-              <FaTrashAlt className="delete-icon" /> Delete
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+              Tweet
+            </Button>
+            {tweets.map((tweet, index) => (
+              <Box key={tweet._id} bg="white" p="4" mb="4" borderRadius="md" boxShadow="md">
+                <Flex align="center">
+                  <FaUserCircle color="gray.500" fontSize="xl" />
+                  <Text ml="2">{tweet.content}</Text>
+                  <Spacer />
+                  <IconButton
+                    colorScheme="red"
+                    aria-label="Delete Tweet"
+                    icon={<FaTrashAlt />}
+                    onClick={() => handleTweetDelete(tweet._id)}
+                  />
+                </Flex>
+              </Box>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+    </ChakraProvider>
   );
 };
 
