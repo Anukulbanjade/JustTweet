@@ -6,7 +6,7 @@ const app = express();
 const port = 5000;
 
 // MongoDB connection
-mongoose.connect('*ADD CONNECTION STRING HERE*', {});
+mongoose.connect('ADD MONGO DB URI', {});
 
 const connection = mongoose.connection;
 connection.once('open', () => {

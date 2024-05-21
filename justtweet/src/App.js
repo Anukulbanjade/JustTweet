@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ChakraProvider, Box, Container, Heading, Text, Textarea, Button, Flex, Spacer, IconButton, useToast } from '@chakra-ui/react';
+import { ChakraProvider, Box, Container, Heading, Text, Textarea, Button, Flex, Spacer, IconButton, useToast, AlertDialog, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, AlertDialogCloseButton } from '@chakra-ui/react';
 import { FaTwitter, FaPaperPlane, FaUserCircle, FaTrashAlt } from 'react-icons/fa';
+import useSound from 'use-sound';
+import tweetSound from './tweet-sound.mp3';
 
 const App = () => {
   const [tweets, setTweets] = useState([]);
   const [newTweet, setNewTweet] = useState('');
   const [tweetCounter, setTweetCounter] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [tweetToDelete, setTweetToDelete] = useState(null);
   const toast = useToast();
 
   const mongodb_url = 'http://localhost:5000';
@@ -18,7 +22,7 @@ const App = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchTweets();
-    }, 10000); // Refresh tweets every 10 seconds
+    }, 100); 
     return () => clearInterval(interval);
   }, []);
 
@@ -50,13 +54,14 @@ const App = () => {
     try {
       await axios.post(`${mongodb_url}/tweets`, { content: newTweet });
       setNewTweet('');
-      fetchTweets();
       toast({
         title: "Tweet posted successfully",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
+      playTweetSound(); // Play tweet sound
+      fetchTweets(); // Refresh tweets after posting
     } catch (error) {
       console.error('Error creating tweet:', error);
       toast({
@@ -69,8 +74,13 @@ const App = () => {
   };
 
   const handleTweetDelete = async (id) => {
+    setTweetToDelete(id);
+    setIsDeleting(true);
+  };
+
+  const onDeleteConfirmation = async () => {
     try {
-      await axios.delete(`${mongodb_url}/tweets/${id}`);
+      await axios.delete(`${mongodb_url}/tweets/${tweetToDelete}`);
       fetchTweets();
       toast({
         title: "Tweet deleted successfully",
@@ -86,21 +96,30 @@ const App = () => {
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setIsDeleting(false);
+      setTweetToDelete(null);
     }
   };
 
+  const onCloseDeleteConfirmation = () => {
+    setIsDeleting(false);
+    setTweetToDelete(null);
+  };
+
+  // Play tweet sound when posted
+  const [playTweetSound] = useSound(tweetSound);
+
   return (
     <ChakraProvider>
-      <Box bg="gray.100" minHeight="100vh">
+      <Box bg="gray.100" minH="100vh">
         <Container maxW="xl" py="8">
           <Box bg="white" p="6" borderRadius="lg" boxShadow="lg">
             <Flex align="center" mb="4">
               <FaTwitter color="blue.500" fontSize="3xl" />
               <Heading as="h1" size="lg" ml="2">JustTweet</Heading>
               <Spacer />
-              <Box>
-                <Text fontWeight="bold">Tweets: {tweetCounter}</Text>
-              </Box>
+              <Text fontWeight="bold">Tweets: {tweetCounter}</Text>
             </Flex>
             <Textarea
               placeholder="What's happening?"
@@ -135,6 +154,26 @@ const App = () => {
           </Box>
         </Container>
       </Box>
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        isOpen={isDeleting}
+        leastDestructiveRef={null}
+        onClose={onCloseDeleteConfirmation}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader>Delete Tweet</AlertDialogHeader>
+            <AlertDialogCloseButton />
+            <AlertDialogBody>
+              Are you sure you want to delete this tweet?
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button onClick={onCloseDeleteConfirmation}>Cancel</Button>
+              <Button colorScheme="red" onClick={onDeleteConfirmation} ml={3}>Delete</Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </ChakraProvider>
   );
 };
